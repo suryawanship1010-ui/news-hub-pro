@@ -9,38 +9,209 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppWorkspaceRouteImport } from './routes/_app/workspace'
+import { Route as AppUsersRouteImport } from './routes/_app/users'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppLiveRouteImport } from './routes/_app/live'
+import { Route as AppFeedRouteImport } from './routes/_app/feed'
+import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppAdsRouteImport } from './routes/_app/ads'
+import { Route as AppNewsIndexRouteImport } from './routes/_app/news/index'
+import { Route as AppNewsPreviewIdRouteImport } from './routes/_app/news/preview.$id'
+import { Route as AppNewsEditorNewRouteImport } from './routes/_app/news/editor.new'
+import { Route as AppNewsEditorIdRouteImport } from './routes/_app/news/editor.$id'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWorkspaceRoute = AppWorkspaceRouteImport.update({
+  id: '/workspace',
+  path: '/workspace',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUsersRoute = AppUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLiveRoute = AppLiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFeedRoute = AppFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdsRoute = AppAdsRouteImport.update({
+  id: '/ads',
+  path: '/ads',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNewsIndexRoute = AppNewsIndexRouteImport.update({
+  id: '/news/',
+  path: '/news/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNewsPreviewIdRoute = AppNewsPreviewIdRouteImport.update({
+  id: '/news/preview/$id',
+  path: '/news/preview/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNewsEditorNewRoute = AppNewsEditorNewRouteImport.update({
+  id: '/news/editor/new',
+  path: '/news/editor/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNewsEditorIdRoute = AppNewsEditorIdRouteImport.update({
+  id: '/news/editor/$id',
+  path: '/news/editor/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/ads': typeof AppAdsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/feed': typeof AppFeedRoute
+  '/live': typeof AppLiveRoute
+  '/settings': typeof AppSettingsRoute
+  '/users': typeof AppUsersRoute
+  '/workspace': typeof AppWorkspaceRoute
+  '/news/': typeof AppNewsIndexRoute
+  '/news/editor/$id': typeof AppNewsEditorIdRoute
+  '/news/editor/new': typeof AppNewsEditorNewRoute
+  '/news/preview/$id': typeof AppNewsPreviewIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/ads': typeof AppAdsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/feed': typeof AppFeedRoute
+  '/live': typeof AppLiveRoute
+  '/settings': typeof AppSettingsRoute
+  '/users': typeof AppUsersRoute
+  '/workspace': typeof AppWorkspaceRoute
+  '/news': typeof AppNewsIndexRoute
+  '/news/editor/$id': typeof AppNewsEditorIdRoute
+  '/news/editor/new': typeof AppNewsEditorNewRoute
+  '/news/preview/$id': typeof AppNewsPreviewIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/ads': typeof AppAdsRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/feed': typeof AppFeedRoute
+  '/_app/live': typeof AppLiveRoute
+  '/_app/settings': typeof AppSettingsRoute
+  '/_app/users': typeof AppUsersRoute
+  '/_app/workspace': typeof AppWorkspaceRoute
+  '/_app/news/': typeof AppNewsIndexRoute
+  '/_app/news/editor/$id': typeof AppNewsEditorIdRoute
+  '/_app/news/editor/new': typeof AppNewsEditorNewRoute
+  '/_app/news/preview/$id': typeof AppNewsPreviewIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/ads'
+    | '/dashboard'
+    | '/feed'
+    | '/live'
+    | '/settings'
+    | '/users'
+    | '/workspace'
+    | '/news/'
+    | '/news/editor/$id'
+    | '/news/editor/new'
+    | '/news/preview/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/ads'
+    | '/dashboard'
+    | '/feed'
+    | '/live'
+    | '/settings'
+    | '/users'
+    | '/workspace'
+    | '/news'
+    | '/news/editor/$id'
+    | '/news/editor/new'
+    | '/news/preview/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/ads'
+    | '/_app/dashboard'
+    | '/_app/feed'
+    | '/_app/live'
+    | '/_app/settings'
+    | '/_app/users'
+    | '/_app/workspace'
+    | '/_app/news/'
+    | '/_app/news/editor/$id'
+    | '/_app/news/editor/new'
+    | '/_app/news/preview/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +219,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/workspace': {
+      id: '/_app/workspace'
+      path: '/workspace'
+      fullPath: '/workspace'
+      preLoaderRoute: typeof AppWorkspaceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/users': {
+      id: '/_app/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AppUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/live': {
+      id: '/_app/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof AppLiveRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/feed': {
+      id: '/_app/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof AppFeedRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ads': {
+      id: '/_app/ads'
+      path: '/ads'
+      fullPath: '/ads'
+      preLoaderRoute: typeof AppAdsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/news/': {
+      id: '/_app/news/'
+      path: '/news'
+      fullPath: '/news/'
+      preLoaderRoute: typeof AppNewsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/news/preview/$id': {
+      id: '/_app/news/preview/$id'
+      path: '/news/preview/$id'
+      fullPath: '/news/preview/$id'
+      preLoaderRoute: typeof AppNewsPreviewIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/news/editor/new': {
+      id: '/_app/news/editor/new'
+      path: '/news/editor/new'
+      fullPath: '/news/editor/new'
+      preLoaderRoute: typeof AppNewsEditorNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/news/editor/$id': {
+      id: '/_app/news/editor/$id'
+      path: '/news/editor/$id'
+      fullPath: '/news/editor/$id'
+      preLoaderRoute: typeof AppNewsEditorIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAdsRoute: typeof AppAdsRoute
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppFeedRoute: typeof AppFeedRoute
+  AppLiveRoute: typeof AppLiveRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppUsersRoute: typeof AppUsersRoute
+  AppWorkspaceRoute: typeof AppWorkspaceRoute
+  AppNewsIndexRoute: typeof AppNewsIndexRoute
+  AppNewsEditorIdRoute: typeof AppNewsEditorIdRoute
+  AppNewsEditorNewRoute: typeof AppNewsEditorNewRoute
+  AppNewsPreviewIdRoute: typeof AppNewsPreviewIdRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAdsRoute: AppAdsRoute,
+  AppDashboardRoute: AppDashboardRoute,
+  AppFeedRoute: AppFeedRoute,
+  AppLiveRoute: AppLiveRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppUsersRoute: AppUsersRoute,
+  AppWorkspaceRoute: AppWorkspaceRoute,
+  AppNewsIndexRoute: AppNewsIndexRoute,
+  AppNewsEditorIdRoute: AppNewsEditorIdRoute,
+  AppNewsEditorNewRoute: AppNewsEditorNewRoute,
+  AppNewsPreviewIdRoute: AppNewsPreviewIdRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
