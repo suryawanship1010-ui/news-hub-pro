@@ -25,6 +25,10 @@ export const Route = createFileRoute("/_app/news/editor/$id")({
   ),
 });
 
+export function Editor({ forceNew = false }: { forceNew?: boolean } = {}) {
+  return <EditorInner forceNew={forceNew} />;
+}
+
 interface FormState {
   title: string;
   excerpt: string;
@@ -36,9 +40,10 @@ interface FormState {
 
 const EMPTY: FormState = { title: "", excerpt: "", category: "", image_url: "", content: "", status: "draft" };
 
-function Editor() {
-  const { id } = Route.useParams();
-  const isNew = id === "new";
+function EditorInner({ forceNew }: { forceNew: boolean }) {
+  const params = (Route as any).useParams({ shouldThrow: false }) as { id?: string } | undefined;
+  const id = forceNew ? "new" : (params?.id ?? "new");
+  const isNew = forceNew || id === "new";
   const auth = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();

@@ -1,6 +1,11 @@
-// /news/editor/new handler — shares editor component via $id=new
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { AuthGuard } from "@/guards/AuthGuard";
+import { Editor } from "./editor.$id";
 
 export const Route = createFileRoute("/_app/news/editor/new")({
-  component: () => <Navigate to="/news/editor/$id" params={{ id: "new" }} replace />,
+  component: () => (
+    <AuthGuard require={["admin", "reporter"]}>
+      <Editor forceNew />
+    </AuthGuard>
+  ),
 });
