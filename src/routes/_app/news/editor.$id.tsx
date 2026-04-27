@@ -41,7 +41,7 @@ interface FormState {
 const EMPTY: FormState = { title: "", excerpt: "", category: "", image_url: "", content: "", status: "draft" };
 
 function EditorInner({ forceNew }: { forceNew: boolean }) {
-  const params = Route.useParams({ shouldThrow: false }) as { id?: string } | undefined;
+  const params = (Route as any).useParams({ shouldThrow: false }) as { id?: string } | undefined;
   const id = forceNew ? "new" : (params?.id ?? "new");
   const isNew = forceNew || id === "new";
   const auth = useAuth();
