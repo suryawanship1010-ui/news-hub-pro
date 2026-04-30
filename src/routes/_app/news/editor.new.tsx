@@ -4,7 +4,7 @@ import { Editor } from "./editor.$id";
 
 export const Route = createFileRoute("/_app/news/editor/new")({
   component: () => (
-    <AuthGuard require={["admin", "reporter"]}>
+    <AuthGuard require="admin">
       <Editor forceNew />
     </AuthGuard>
   ),

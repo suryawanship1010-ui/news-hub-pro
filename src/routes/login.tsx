@@ -27,7 +27,7 @@ function LoginPage() {
   const isSignup = mode === "signup";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (auth.status === "loading") return <FullPageLoader />;
@@ -38,7 +38,7 @@ function LoginPage() {
     setLoading(true);
     try {
       if (isSignup) {
-        await signUp(email, password, displayName || undefined);
+        await signUp(email, password, fullName || undefined);
         toast.success("Account created. You can sign in now.");
         navigate({ to: "/login", search: {} });
       } else {
@@ -60,9 +60,9 @@ function LoginPage() {
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
             <Newspaper className="h-6 w-6" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">NewsDesk</h1>
+          <h1 className="text-3xl font-bold tracking-tight">NewsAdmin</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {isSignup ? "Create your reporter account" : "Sign in to your workspace"}
+            {isSignup ? "Create your account" : "Sign in to your workspace"}
           </p>
         </div>
 
@@ -70,8 +70,8 @@ function LoginPage() {
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
             {isSignup && (
               <div>
-                <Label htmlFor="displayName">Display name</Label>
-                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Jane Reporter" className="mt-1.5" />
+                <Label htmlFor="fullName">Full name</Label>
+                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Doe" className="mt-1.5" />
               </div>
             )}
             <div>
