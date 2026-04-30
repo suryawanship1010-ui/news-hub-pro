@@ -12,13 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppWorkspaceRouteImport } from './routes/_app/workspace'
 import { Route as AppUsersRouteImport } from './routes/_app/users'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
-import { Route as AppLiveRouteImport } from './routes/_app/live'
-import { Route as AppFeedRouteImport } from './routes/_app/feed'
+import { Route as AppSavedRouteImport } from './routes/_app/saved'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
-import { Route as AppAdsRouteImport } from './routes/_app/ads'
 import { Route as AppNewsIndexRouteImport } from './routes/_app/news/index'
 import { Route as AppNewsPreviewIdRouteImport } from './routes/_app/news/preview.$id'
 import { Route as AppNewsEditorNewRouteImport } from './routes/_app/news/editor.new'
@@ -38,11 +35,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppWorkspaceRoute = AppWorkspaceRouteImport.update({
-  id: '/workspace',
-  path: '/workspace',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppUsersRoute = AppUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -53,24 +45,14 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppLiveRoute = AppLiveRouteImport.update({
-  id: '/live',
-  path: '/live',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppFeedRoute = AppFeedRouteImport.update({
-  id: '/feed',
-  path: '/feed',
+const AppSavedRoute = AppSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAdsRoute = AppAdsRouteImport.update({
-  id: '/ads',
-  path: '/ads',
   getParentRoute: () => AppRoute,
 } as any)
 const AppNewsIndexRoute = AppNewsIndexRouteImport.update({
@@ -97,13 +79,10 @@ const AppNewsEditorIdRoute = AppNewsEditorIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/ads': typeof AppAdsRoute
   '/dashboard': typeof AppDashboardRoute
-  '/feed': typeof AppFeedRoute
-  '/live': typeof AppLiveRoute
+  '/saved': typeof AppSavedRoute
   '/settings': typeof AppSettingsRoute
   '/users': typeof AppUsersRoute
-  '/workspace': typeof AppWorkspaceRoute
   '/news/': typeof AppNewsIndexRoute
   '/news/editor/$id': typeof AppNewsEditorIdRoute
   '/news/editor/new': typeof AppNewsEditorNewRoute
@@ -112,13 +91,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/ads': typeof AppAdsRoute
   '/dashboard': typeof AppDashboardRoute
-  '/feed': typeof AppFeedRoute
-  '/live': typeof AppLiveRoute
+  '/saved': typeof AppSavedRoute
   '/settings': typeof AppSettingsRoute
   '/users': typeof AppUsersRoute
-  '/workspace': typeof AppWorkspaceRoute
   '/news': typeof AppNewsIndexRoute
   '/news/editor/$id': typeof AppNewsEditorIdRoute
   '/news/editor/new': typeof AppNewsEditorNewRoute
@@ -129,13 +105,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
-  '/_app/ads': typeof AppAdsRoute
   '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/feed': typeof AppFeedRoute
-  '/_app/live': typeof AppLiveRoute
+  '/_app/saved': typeof AppSavedRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/users': typeof AppUsersRoute
-  '/_app/workspace': typeof AppWorkspaceRoute
   '/_app/news/': typeof AppNewsIndexRoute
   '/_app/news/editor/$id': typeof AppNewsEditorIdRoute
   '/_app/news/editor/new': typeof AppNewsEditorNewRoute
@@ -146,13 +119,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
-    | '/ads'
     | '/dashboard'
-    | '/feed'
-    | '/live'
+    | '/saved'
     | '/settings'
     | '/users'
-    | '/workspace'
     | '/news/'
     | '/news/editor/$id'
     | '/news/editor/new'
@@ -161,13 +131,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
-    | '/ads'
     | '/dashboard'
-    | '/feed'
-    | '/live'
+    | '/saved'
     | '/settings'
     | '/users'
-    | '/workspace'
     | '/news'
     | '/news/editor/$id'
     | '/news/editor/new'
@@ -177,13 +144,10 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
-    | '/_app/ads'
     | '/_app/dashboard'
-    | '/_app/feed'
-    | '/_app/live'
+    | '/_app/saved'
     | '/_app/settings'
     | '/_app/users'
-    | '/_app/workspace'
     | '/_app/news/'
     | '/_app/news/editor/$id'
     | '/_app/news/editor/new'
@@ -219,13 +183,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/workspace': {
-      id: '/_app/workspace'
-      path: '/workspace'
-      fullPath: '/workspace'
-      preLoaderRoute: typeof AppWorkspaceRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/users': {
       id: '/_app/users'
       path: '/users'
@@ -240,18 +197,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/live': {
-      id: '/_app/live'
-      path: '/live'
-      fullPath: '/live'
-      preLoaderRoute: typeof AppLiveRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/feed': {
-      id: '/_app/feed'
-      path: '/feed'
-      fullPath: '/feed'
-      preLoaderRoute: typeof AppFeedRouteImport
+    '/_app/saved': {
+      id: '/_app/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof AppSavedRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard': {
@@ -259,13 +209,6 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ads': {
-      id: '/_app/ads'
-      path: '/ads'
-      fullPath: '/ads'
-      preLoaderRoute: typeof AppAdsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/news/': {
@@ -300,13 +243,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
-  AppAdsRoute: typeof AppAdsRoute
   AppDashboardRoute: typeof AppDashboardRoute
-  AppFeedRoute: typeof AppFeedRoute
-  AppLiveRoute: typeof AppLiveRoute
+  AppSavedRoute: typeof AppSavedRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppUsersRoute: typeof AppUsersRoute
-  AppWorkspaceRoute: typeof AppWorkspaceRoute
   AppNewsIndexRoute: typeof AppNewsIndexRoute
   AppNewsEditorIdRoute: typeof AppNewsEditorIdRoute
   AppNewsEditorNewRoute: typeof AppNewsEditorNewRoute
@@ -314,13 +254,10 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAdsRoute: AppAdsRoute,
   AppDashboardRoute: AppDashboardRoute,
-  AppFeedRoute: AppFeedRoute,
-  AppLiveRoute: AppLiveRoute,
+  AppSavedRoute: AppSavedRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppUsersRoute: AppUsersRoute,
-  AppWorkspaceRoute: AppWorkspaceRoute,
   AppNewsIndexRoute: AppNewsIndexRoute,
   AppNewsEditorIdRoute: AppNewsEditorIdRoute,
   AppNewsEditorNewRoute: AppNewsEditorNewRoute,

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { InlineLoader } from "@/components/loaders";
-import { Newspaper, Users, FileText, CheckCircle2 } from "lucide-react";
+import { Newspaper, Users, Bookmark, Layers } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: () => (
@@ -18,29 +18,40 @@ function DashboardPage() {
   const stats = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [{ count: total }, { count: published }, { count: drafts }, { count: users }] = await Promise.all([
-        supabase.from("articles").select("*", { count: "exact", head: true }),
-        supabase.from("articles").select("*", { count: "exact", head: true }).eq("status", "published"),
-        supabase.from("articles").select("*", { count: "exact", head: true }).eq("status", "draft"),
+      const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const [
+        { count: total },
+        { count: weekly },
+        { count: users },
+        { count: saved },
+      ] = await Promise.all([
+        supabase.from("news").select("*", { count: "exact", head: true }),
+        supabase.from("news").select("*", { count: "exact", head: true }).gte("created_at", since),
         supabase.from("profiles").select("*", { count: "exact", head: true }),
+        supabase.from("saved_articles").select("*", { count: "exact", head: true }),
       ]);
-      return { total: total ?? 0, published: published ?? 0, drafts: drafts ?? 0, users: users ?? 0 };
+      return {
+        total: total ?? 0,
+        weekly: weekly ?? 0,
+        users: users ?? 0,
+        saved: saved ?? 0,
+      };
     },
   });
 
   return (
     <div className="mx-auto max-w-7xl">
       <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-      <p className="mt-1 text-muted-foreground">Overview of your newsroom.</p>
+      <p className="mt-1 text-muted-foreground">Overview of your news platform.</p>
 
       {stats.isLoading ? (
         <InlineLoader />
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard icon={Newspaper} label="Total articles" value={stats.data?.total ?? 0} tone="primary" />
-          <StatCard icon={CheckCircle2} label="Published" value={stats.data?.published ?? 0} tone="success" />
-          <StatCard icon={FileText} label="Drafts" value={stats.data?.drafts ?? 0} tone="warning" />
+          <StatCard icon={Newspaper} label="Total news" value={stats.data?.total ?? 0} tone="primary" />
+          <StatCard icon={Layers} label="Last 7 days" value={stats.data?.weekly ?? 0} tone="success" />
           <StatCard icon={Users} label="Users" value={stats.data?.users ?? 0} tone="accent" />
+          <StatCard icon={Bookmark} label="Saved articles" value={stats.data?.saved ?? 0} tone="warning" />
         </div>
       )}
     </div>

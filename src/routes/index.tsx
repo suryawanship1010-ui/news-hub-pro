@@ -10,6 +10,6 @@ function Index() {
   const auth = useAuth();
   if (auth.status === "loading") return <FullPageLoader />;
   if (auth.status === "anon") return <Navigate to="/login" />;
-  const target = auth.roles.includes("admin") ? "/dashboard" : "/workspace";
+  const target = auth.role === "admin" ? "/dashboard" : "/news";
   return <Navigate to={target} />;
 }
