@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { AuthGuard } from "@/guards/AuthGuard";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -41,7 +41,7 @@ interface FormState {
 const EMPTY: FormState = { title: "", excerpt: "", category: "", image_url: "", content: "", status: "draft" };
 
 function EditorInner({ forceNew }: { forceNew: boolean }) {
-  const params = (Route as any).useParams({ shouldThrow: false }) as { id?: string } | undefined;
+  const params = useParams({ strict: false }) as { id?: string };
   const id = forceNew ? "new" : (params?.id ?? "new");
   const isNew = forceNew || id === "new";
   const auth = useAuth();
