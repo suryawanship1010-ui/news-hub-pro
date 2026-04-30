@@ -36,6 +36,7 @@ function UsersPage() {
       if (rolesRes.error) throw rolesRes.error;
       const roleByUser = new Map<string, AppRole>();
       for (const r of rolesRes.data ?? []) {
+        if (!r.user_id) continue;
         if (r.role === "admin" || r.role === "user") roleByUser.set(r.user_id, r.role);
       }
       return (profilesRes.data ?? []).map((p) => ({
