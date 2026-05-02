@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { InlineLoader } from "@/components/loaders";
-import { Newspaper, Users, FileText, CheckCircle2 } from "lucide-react";
+import { Newspaper, Users, Megaphone, Activity } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: () => (
@@ -18,13 +18,14 @@ function DashboardPage() {
   const stats = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [{ count: total }, { count: published }, { count: drafts }, { count: users }] = await Promise.all([
-        supabase.from("articles").select("*", { count: "exact", head: true }),
-        supabase.from("articles").select("*", { count: "exact", head: true }).eq("status", "published"),
-        supabase.from("articles").select("*", { count: "exact", head: true }).eq("status", "draft"),
+      const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const [{ count: total }, { count: recent }, { count: ads }, { count: users }] = await Promise.all([
+        supabase.from("news").select("*", { count: "exact", head: true }),
+        supabase.from("news").select("*", { count: "exact", head: true }).gte("created_at", since),
+        supabase.from("ads").select("*", { count: "exact", head: true }).eq("active", true),
         supabase.from("profiles").select("*", { count: "exact", head: true }),
       ]);
-      return { total: total ?? 0, published: published ?? 0, drafts: drafts ?? 0, users: users ?? 0 };
+      return { total: total ?? 0, recent: recent ?? 0, ads: ads ?? 0, users: users ?? 0 };
     },
   });
 
@@ -38,8 +39,8 @@ function DashboardPage() {
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard icon={Newspaper} label="Total articles" value={stats.data?.total ?? 0} tone="primary" />
-          <StatCard icon={CheckCircle2} label="Published" value={stats.data?.published ?? 0} tone="success" />
-          <StatCard icon={FileText} label="Drafts" value={stats.data?.drafts ?? 0} tone="warning" />
+          <StatCard icon={Activity} label="Last 7 days" value={stats.data?.recent ?? 0} tone="success" />
+          <StatCard icon={Megaphone} label="Active ads" value={stats.data?.ads ?? 0} tone="warning" />
           <StatCard icon={Users} label="Users" value={stats.data?.users ?? 0} tone="accent" />
         </div>
       )}

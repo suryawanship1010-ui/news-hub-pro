@@ -9,9 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { InlineLoader } from "@/components/loaders";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
@@ -31,14 +28,23 @@ export function Editor({ forceNew = false }: { forceNew?: boolean } = {}) {
 
 interface FormState {
   title: string;
-  excerpt: string;
+  description: string;
   category: string;
   image_url: string;
-  content: string;
-  status: "draft" | "published";
+  url: string;
+  source: string;
+  summary: string;
+  country: string;
+  state: string;
+  district: string;
+  city: string;
+  pincode: string;
 }
 
-const EMPTY: FormState = { title: "", excerpt: "", category: "", image_url: "", content: "", status: "draft" };
+const EMPTY: FormState = {
+  title: "", description: "", category: "general", image_url: "", url: "",
+  source: "", summary: "", country: "", state: "", district: "", city: "", pincode: "",
+};
 
 function EditorInner({ forceNew }: { forceNew: boolean }) {
   const params = useParams({ strict: false }) as { id?: string };
@@ -51,10 +57,10 @@ function EditorInner({ forceNew }: { forceNew: boolean }) {
   const [loaded, setLoaded] = useState(isNew);
 
   const articleQ = useQuery({
-    queryKey: ["article", id],
+    queryKey: ["news", id],
     enabled: !isNew,
     queryFn: async () => {
-      const { data, error } = await supabase.from("articles").select("*").eq("id", id).maybeSingle();
+      const { data, error } = await supabase.from("news").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Article not found");
       return data;
@@ -63,52 +69,61 @@ function EditorInner({ forceNew }: { forceNew: boolean }) {
 
   useEffect(() => {
     if (articleQ.data && !loaded) {
+      const d = articleQ.data;
       setForm({
-        title: articleQ.data.title ?? "",
-        excerpt: articleQ.data.excerpt ?? "",
-        category: articleQ.data.category ?? "",
-        image_url: articleQ.data.image_url ?? "",
-        content: articleQ.data.content ?? "",
-        status: articleQ.data.status,
+        title: d.title ?? "",
+        description: d.description ?? "",
+        category: d.category ?? "general",
+        image_url: d.image_url ?? "",
+        url: d.url ?? "",
+        source: d.source ?? "",
+        summary: d.summary ?? "",
+        country: d.country ?? "",
+        state: d.state ?? "",
+        district: d.district ?? "",
+        city: d.city ?? "",
+        pincode: d.pincode ?? "",
       });
       setLoaded(true);
     }
   }, [articleQ.data, loaded]);
 
   const save = useMutation({
-    mutationFn: async (publish?: boolean) => {
+    mutationFn: async () => {
       if (!auth.user) throw new Error("Not signed in");
       if (!form.title.trim()) throw new Error("Title is required");
 
-      const status = publish ? "published" : form.status;
-      const published_at = publish && status === "published" ? new Date().toISOString() : undefined;
-
       const payload = {
         title: form.title.trim(),
-        excerpt: form.excerpt || null,
-        category: form.category || null,
+        description: form.description || null,
+        category: form.category || "general",
         image_url: form.image_url || null,
-        content: form.content || null,
-        status,
-        ...(published_at !== undefined ? { published_at } : {}),
+        url: form.url || null,
+        source: form.source || null,
+        summary: form.summary || null,
+        country: form.country || null,
+        state: form.state || null,
+        district: form.district || null,
+        city: form.city || null,
+        pincode: form.pincode || null,
       };
 
       if (isNew) {
-        const { data, error } = await supabase.from("articles")
-          .insert({ ...payload, author_id: auth.user.id })
+        const { data, error } = await supabase.from("news")
+          .insert({ ...payload, created_by: auth.user.id })
           .select("id").single();
         if (error) throw error;
         return data.id;
       } else {
-        const { error } = await supabase.from("articles").update(payload).eq("id", id);
+        const { error } = await supabase.from("news").update(payload).eq("id", id);
         if (error) throw error;
         return id;
       }
     },
-    onSuccess: (newId, publish) => {
-      toast.success(publish ? "Published" : "Saved");
-      qc.invalidateQueries({ queryKey: ["articles"] });
-      qc.invalidateQueries({ queryKey: ["article", newId] });
+    onSuccess: (newId) => {
+      toast.success("Saved");
+      qc.invalidateQueries({ queryKey: ["news-list"] });
+      qc.invalidateQueries({ queryKey: ["news", newId] });
       qc.invalidateQueries({ queryKey: ["workspace-stats"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
       if (isNew) navigate({ to: "/news/editor/$id", params: { id: newId } });
@@ -142,14 +157,14 @@ function EditorInner({ forceNew }: { forceNew: boolean }) {
               placeholder="Your headline" className="mt-1.5 text-lg" />
           </div>
           <div>
-            <Label htmlFor="excerpt">Excerpt</Label>
-            <Textarea id="excerpt" value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
-              placeholder="One-line summary" className="mt-1.5" rows={2} />
+            <Label htmlFor="description">Short description</Label>
+            <Textarea id="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="One-line summary shown in feed" className="mt-1.5" rows={2} />
           </div>
           <div>
-            <Label>Content</Label>
+            <Label>Full content / Summary</Label>
             <div className="mt-1.5">
-              <RichTextEditor value={form.content} onChange={(html) => setForm((f) => ({ ...f, content: html }))} />
+              <RichTextEditor value={form.summary} onChange={(html) => setForm((f) => ({ ...f, summary: html }))} />
             </div>
           </div>
         </div>
@@ -158,25 +173,10 @@ function EditorInner({ forceNew }: { forceNew: boolean }) {
           <Card className="p-4">
             <h3 className="font-semibold">Publish</h3>
             <div className="mt-3 space-y-3">
-              <div>
-                <Label>Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as "draft" | "published" })}>
-                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button className="w-full" onClick={() => save.mutate(undefined)} disabled={save.isPending}>
+              <Button className="w-full" onClick={() => save.mutate()} disabled={save.isPending}>
                 {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Save
               </Button>
-              {form.status !== "published" && (
-                <Button variant="secondary" className="w-full" onClick={() => save.mutate(true)} disabled={save.isPending}>
-                  Publish now
-                </Button>
-              )}
               {!isNew && (
                 <Button variant="outline" className="w-full" asChild>
                   <Link to="/news/preview/$id" params={{ id }}><Eye className="mr-2 h-4 w-4" /> Preview</Link>
@@ -190,7 +190,15 @@ function EditorInner({ forceNew }: { forceNew: boolean }) {
             <div className="mt-3 space-y-3">
               <div>
                 <Label htmlFor="category">Category</Label>
-                <Input id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="e.g. Politics" className="mt-1.5" />
+                <Input id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="general" className="mt-1.5" />
+              </div>
+              <div>
+                <Label htmlFor="source">Source</Label>
+                <Input id="source" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} placeholder="e.g. Reuters" className="mt-1.5" />
+              </div>
+              <div>
+                <Label htmlFor="url">External URL</Label>
+                <Input id="url" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" className="mt-1.5" />
               </div>
               <div>
                 <Label htmlFor="image">Cover image URL</Label>
@@ -200,6 +208,32 @@ function EditorInner({ forceNew }: { forceNew: boolean }) {
                     <img src={form.image_url} alt="" className="h-36 w-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
                   </div>
                 )}
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <h3 className="font-semibold">Location</h3>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="country" className="text-xs">Country</Label>
+                <Input id="country" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className="mt-1" />
+              </div>
+              <div>
+                <Label htmlFor="state" className="text-xs">State</Label>
+                <Input id="state" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className="mt-1" />
+              </div>
+              <div>
+                <Label htmlFor="district" className="text-xs">District</Label>
+                <Input id="district" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} className="mt-1" />
+              </div>
+              <div>
+                <Label htmlFor="city" className="text-xs">City</Label>
+                <Input id="city" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="mt-1" />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="pincode" className="text-xs">Pincode</Label>
+                <Input id="pincode" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} className="mt-1" maxLength={10} />
               </div>
             </div>
           </Card>
