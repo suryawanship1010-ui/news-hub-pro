@@ -18,7 +18,7 @@ import { useState } from "react";
 
 const searchSchema = z.object({
   q: z.string().optional(),
-  status: z.enum(["all", "draft", "published"]).optional(),
+  scope: z.enum(["all", "mine"]).optional(),
   page: z.number().int().min(1).optional(),
 });
 
@@ -42,19 +42,18 @@ function NewsList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const page = search.page ?? 1;
-  const status = search.status ?? "all";
+  const scope = search.scope ?? (isAdmin ? "all" : "mine");
   const q = search.q ?? "";
 
   const { data, isLoading } = useQuery({
-    queryKey: ["articles", { isAdmin, uid: auth.user?.id, status, q, page }],
+    queryKey: ["news-list", { isAdmin, uid: auth.user?.id, scope, q, page }],
     queryFn: async () => {
       let query = supabase
-        .from("articles")
-        .select("id,title,status,author_id,created_at,updated_at,image_url,category", { count: "exact" })
-        .order("updated_at", { ascending: false })
+        .from("news")
+        .select("id,title,description,created_by,created_at,image_url,category,city,state", { count: "exact" })
+        .order("created_at", { ascending: false })
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-      if (!isAdmin) query = query.eq("author_id", auth.user!.id);
-      if (status !== "all") query = query.eq("status", status);
+      if (!isAdmin || scope === "mine") query = query.eq("created_by", auth.user!.id);
       if (q) query = query.ilike("title", `%${q}%`);
       const { data, error, count } = await query;
       if (error) throw error;
@@ -64,12 +63,12 @@ function NewsList() {
 
   const delMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("articles").delete().eq("id", id);
+      const { error } = await supabase.from("news").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Article deleted");
-      qc.invalidateQueries({ queryKey: ["articles"] });
+      qc.invalidateQueries({ queryKey: ["news-list"] });
       qc.invalidateQueries({ queryKey: ["workspace-stats"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
     },
@@ -85,7 +84,7 @@ function NewsList() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">News</h1>
           <p className="mt-1 text-muted-foreground">
-            {isAdmin ? "All articles across the newsroom." : "Your articles."}
+            {isAdmin ? (scope === "mine" ? "Articles you created." : "All articles across the newsroom.") : "Your articles."}
           </p>
         </div>
         <Button asChild><Link to="/news/editor/new"><Plus className="mr-2 h-4 w-4" /> New article</Link></Button>
@@ -101,17 +100,19 @@ function NewsList() {
             className="pl-9"
           />
         </div>
-        <div className="flex gap-2">
-          {(["all", "draft", "published"] as const).map((s) => (
-            <Button
-              key={s}
-              variant={status === s ? "default" : "outline"}
-              size="sm"
-              onClick={() => navigate({ search: (p) => ({ ...p, status: s, page: 1 }) })}
-              className="capitalize"
-            >{s}</Button>
-          ))}
-        </div>
+        {isAdmin && (
+          <div className="flex gap-2">
+            {(["all", "mine"] as const).map((s) => (
+              <Button
+                key={s}
+                variant={scope === s ? "default" : "outline"}
+                size="sm"
+                onClick={() => navigate({ search: (p) => ({ ...p, scope: s, page: 1 }) })}
+                className="capitalize"
+              >{s === "all" ? "All articles" : "My articles"}</Button>
+            ))}
+          </div>
+        )}
       </div>
 
       <Card className="mt-4 overflow-hidden">
@@ -127,13 +128,11 @@ function NewsList() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{a.title}</p>
+                  <p className="truncate font-medium">{a.title ?? "Untitled"}</p>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className={`rounded-full px-2 py-0.5 font-medium capitalize ${a.status === "published" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
-                      {a.status}
-                    </span>
-                    {a.category && <span>· {a.category}</span>}
-                    <span>· {new Date(a.updated_at).toLocaleDateString()}</span>
+                    {a.category && <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium capitalize text-primary">{a.category}</span>}
+                    {(a.city || a.state) && <span>· {[a.city, a.state].filter(Boolean).join(", ")}</span>}
+                    {a.created_at && <span>· {new Date(a.created_at).toLocaleDateString()}</span>}
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -143,9 +142,11 @@ function NewsList() {
                   <Button variant="ghost" size="sm" asChild>
                     <Link to="/news/editor/$id" params={{ id: a.id }}><Pencil className="h-4 w-4" /></Link>
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDeleteId(a.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  {(isAdmin || a.created_by === auth.user?.id) && (
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteId(a.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

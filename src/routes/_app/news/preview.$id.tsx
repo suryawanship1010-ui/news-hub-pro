@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { InlineLoader } from "@/components/loaders";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_app/news/preview/$id")({
   component: () => (
@@ -17,12 +17,9 @@ export const Route = createFileRoute("/_app/news/preview/$id")({
 function PreviewPage() {
   const { id } = Route.useParams();
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["article", id],
+    queryKey: ["news", id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("articles")
-        .select("*, profiles:author_id(display_name,avatar_url)")
-        .eq("id", id).maybeSingle();
+      const { data, error } = await supabase.from("news").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Article not found");
       return data;
@@ -39,8 +36,7 @@ function PreviewPage() {
     );
   }
 
-  // profiles may not be returned if RLS blocks; safe access
-  const author = (data as unknown as { profiles?: { display_name?: string | null } }).profiles;
+  const location = [data.city, data.district, data.state, data.country].filter(Boolean).join(", ");
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -56,21 +52,40 @@ function PreviewPage() {
           <img src={data.image_url} alt="" className="aspect-video w-full rounded-xl object-cover" />
         )}
         <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${data.status === "published" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
-            {data.status}
-          </span>
-          {data.category && <span className="text-muted-foreground">{data.category}</span>}
-          <span className="text-muted-foreground">· {new Date(data.updated_at).toLocaleDateString()}</span>
+          {data.category && <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-primary">{data.category}</span>}
+          {data.source && <span className="text-muted-foreground">{data.source}</span>}
+          {data.created_at && <span className="text-muted-foreground">· {new Date(data.created_at).toLocaleDateString()}</span>}
         </div>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight">{data.title}</h1>
-        {data.excerpt && <p className="mt-3 text-lg text-muted-foreground">{data.excerpt}</p>}
-        {author?.display_name && (
-          <p className="mt-4 text-sm text-muted-foreground">By {author.display_name}</p>
+        <h1 className="mt-3 text-4xl font-bold tracking-tight">{data.title ?? "Untitled"}</h1>
+        {data.description && <p className="mt-3 text-lg text-muted-foreground">{data.description}</p>}
+        {location && <p className="mt-2 text-sm text-muted-foreground">📍 {location}{data.pincode ? ` · ${data.pincode}` : ""}</p>}
+        {data.url && (
+          <a href={data.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+            Source link <ExternalLink className="h-3.5 w-3.5" />
+          </a>
         )}
-        <div
-          className="tiptap mt-8"
-          dangerouslySetInnerHTML={{ __html: data.content ?? "<p class='text-muted-foreground'>No content yet.</p>" }}
-        />
+
+        {data.summary && (
+          <div className="tiptap mt-8" dangerouslySetInnerHTML={{ __html: data.summary }} />
+        )}
+
+        {Array.isArray(data.key_points) && data.key_points.length > 0 && (
+          <section className="mt-8">
+            <h2 className="text-xl font-semibold">Key points</h2>
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+              {(data.key_points as unknown[]).map((p, i) => <li key={i}>{String(p)}</li>)}
+            </ul>
+          </section>
+        )}
+
+        {Array.isArray(data.action_points) && data.action_points.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-xl font-semibold">Action points</h2>
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+              {(data.action_points as unknown[]).map((p, i) => <li key={i}>{String(p)}</li>)}
+            </ul>
+          </section>
+        )}
       </article>
     </div>
   );

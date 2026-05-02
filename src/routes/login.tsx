@@ -27,7 +27,7 @@ function LoginPage() {
   const isSignup = mode === "signup";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (auth.status === "loading") return <FullPageLoader />;
@@ -38,7 +38,7 @@ function LoginPage() {
     setLoading(true);
     try {
       if (isSignup) {
-        await signUp(email, password, displayName || undefined);
+        await signUp(email, password, fullName || undefined);
         toast.success("Account created. You can sign in now.");
         navigate({ to: "/login", search: {} });
       } else {
@@ -70,8 +70,8 @@ function LoginPage() {
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
             {isSignup && (
               <div>
-                <Label htmlFor="displayName">Display name</Label>
-                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Jane Reporter" className="mt-1.5" />
+                <Label htmlFor="fullName">Full name</Label>
+                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Reporter" className="mt-1.5" />
               </div>
             )}
             <div>
