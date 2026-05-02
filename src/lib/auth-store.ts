@@ -67,7 +67,8 @@ async function fetchRoles(): Promise<AppRole[]> {
     console.error("fetch roles error", error);
     return [];
   }
-  return (data ?? []) as AppRole[];
+  const arr = (data ?? []) as string[];
+  return arr.filter((r): r is AppRole => r === "admin" || r === "reporter");
 }
 
 async function refreshRoles() {
@@ -109,13 +110,15 @@ export async function signIn(email: string, password: string) {
   if (error) throw error;
 }
 
-export async function signUp(email: string, password: string, displayName?: string) {
+export async function signUp(email: string, password: string, fullName?: string) {
+  const name = fullName ?? email.split("@")[0];
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-      data: { display_name: displayName ?? email.split("@")[0] },
+      // include both keys so the auth trigger picks the right one regardless of project
+      data: { full_name: name, display_name: name },
     },
   });
   if (error) throw error;

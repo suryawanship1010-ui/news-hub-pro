@@ -36,7 +36,8 @@ export function AppShell() {
 
   const isAdmin = auth.roles.includes("admin");
   const items = isAdmin ? ADMIN_NAV : REPORTER_NAV;
-  const displayName = (auth.user?.user_metadata?.display_name as string | undefined) ?? auth.user?.email ?? "User";
+  const meta = (auth.user?.user_metadata ?? {}) as { full_name?: string; display_name?: string };
+  const displayName = meta.full_name ?? meta.display_name ?? auth.user?.email ?? "User";
 
   const handleSignOut = async () => {
     await signOut();
