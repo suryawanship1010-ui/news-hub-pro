@@ -3,25 +3,29 @@ import { useAuth } from "@/hooks/useAuth";
 import { signOut } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Newspaper, Bookmark, Users, Settings, LogOut, Menu, X,
+  LayoutDashboard, Newspaper, Rss, Radio, Megaphone, Users, Settings, Briefcase, LogOut, Menu, X,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; };
 
 const ADMIN_NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/news", label: "News", icon: Newspaper },
-  { to: "/saved", label: "Saved", icon: Bookmark },
+  { to: "/feed", label: "Feed", icon: Rss },
+  { to: "/live", label: "Live News", icon: Radio },
+  { to: "/ads", label: "Ads", icon: Megaphone },
   { to: "/users", label: "Users", icon: Users },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-const USER_NAV: NavItem[] = [
+const REPORTER_NAV: NavItem[] = [
+  { to: "/workspace", label: "My Workspace", icon: Briefcase },
   { to: "/news", label: "News", icon: Newspaper },
-  { to: "/saved", label: "My Saved", icon: Bookmark },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/feed", label: "Feed", icon: Rss },
+  { to: "/live", label: "Live News", icon: Radio },
+  { to: "/ads", label: "Ads", icon: Megaphone },
 ];
 
 export function AppShell() {
@@ -30,12 +34,9 @@ export function AppShell() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isAdmin = auth.role === "admin";
-  const items = isAdmin ? ADMIN_NAV : USER_NAV;
-  const displayName =
-    (auth.user?.user_metadata?.full_name as string | undefined) ??
-    auth.user?.email ??
-    "User";
+  const isAdmin = auth.roles.includes("admin");
+  const items = isAdmin ? ADMIN_NAV : REPORTER_NAV;
+  const displayName = (auth.user?.user_metadata?.display_name as string | undefined) ?? auth.user?.email ?? "User";
 
   const handleSignOut = async () => {
     await signOut();
@@ -44,6 +45,7 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-screen bg-background">
+      {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 w-64 transform border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform md:static md:translate-x-0",
@@ -55,7 +57,7 @@ export function AppShell() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
               <Newspaper className="h-4 w-4" />
             </div>
-            NewsAdmin
+            NewsDesk
           </Link>
           <button className="md:hidden" onClick={() => setMobileOpen(false)} aria-label="Close menu">
             <X className="h-5 w-5" />
@@ -92,7 +94,7 @@ export function AppShell() {
             </div>
             <div className="flex-1 overflow-hidden">
               <p className="truncate text-sm font-medium">{displayName}</p>
-              <p className="text-xs capitalize text-muted-foreground">{auth.role ?? "user"}</p>
+              <p className="text-xs capitalize text-muted-foreground">{isAdmin ? "Admin" : "Reporter"}</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={handleSignOut}>
@@ -105,14 +107,19 @@ export function AppShell() {
         <div className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
+      {/* Main */}
       <div className="flex flex-1 flex-col md:pl-0">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur md:px-8">
-          <button className="md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+          <button
+            className="md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1" />
           <span className="hidden rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium capitalize text-secondary-foreground sm:inline">
-            {auth.role ?? "user"}
+            {isAdmin ? "admin" : "reporter"}
           </span>
         </header>
         <main className="flex-1 p-4 md:p-8">

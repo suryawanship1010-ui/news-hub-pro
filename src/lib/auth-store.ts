@@ -3,14 +3,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 
-export type AppRole = "admin" | "user";
-const ROLE_CACHE_KEY = "nms:role";
+export type AppRole = "admin" | "reporter";
+const ROLE_CACHE_KEY = "nms:roles";
 
 export interface AuthState {
   status: "loading" | "authed" | "anon";
   user: User | null;
   session: Session | null;
-  role: AppRole | null;
+  roles: AppRole[];
 }
 
 type Listener = (s: AuthState) => void;
@@ -19,27 +19,32 @@ let state: AuthState = {
   status: "loading",
   user: null,
   session: null,
-  role: readCachedRole(),
+  roles: readCachedRoles(),
 };
 const listeners = new Set<Listener>();
 
-function readCachedRole(): AppRole | null {
-  if (typeof window === "undefined") return null;
+function readCachedRoles(): AppRole[] {
+  if (typeof window === "undefined") return [];
   try {
     const raw = sessionStorage.getItem(ROLE_CACHE_KEY);
-    if (raw === "admin" || raw === "user") return raw;
-    return null;
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((r): r is AppRole => r === "admin" || r === "reporter") : [];
   } catch {
-    return null;
+    return [];
   }
 }
 
-function writeCachedRole(role: AppRole | null) {
+function writeCachedRoles(roles: AppRole[]) {
   if (typeof window === "undefined") return;
   try {
-    if (role) sessionStorage.setItem(ROLE_CACHE_KEY, role);
-    else sessionStorage.removeItem(ROLE_CACHE_KEY);
+    sessionStorage.setItem(ROLE_CACHE_KEY, JSON.stringify(roles));
   } catch {}
+}
+
+function clearCachedRoles() {
+  if (typeof window === "undefined") return;
+  try { sessionStorage.removeItem(ROLE_CACHE_KEY); } catch {}
 }
 
 function setState(patch: Partial<AuthState>) {
@@ -56,25 +61,19 @@ export function subscribeAuth(l: Listener) {
   return () => listeners.delete(l);
 }
 
-async function fetchRole(userId: string): Promise<AppRole | null> {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle();
+async function fetchRoles(): Promise<AppRole[]> {
+  const { data, error } = await supabase.rpc("get_my_roles");
   if (error) {
-    console.error("fetch role error", error);
-    return null;
+    console.error("fetch roles error", error);
+    return [];
   }
-  const r = data?.role;
-  if (r === "admin" || r === "user") return r;
-  return null;
+  return (data ?? []) as AppRole[];
 }
 
-async function refreshRole(userId: string) {
-  const role = await fetchRole(userId);
-  writeCachedRole(role);
-  setState({ role });
+async function refreshRoles() {
+  const roles = await fetchRoles();
+  writeCachedRoles(roles);
+  setState({ roles });
 }
 
 let initPromise: Promise<void> | null = null;
@@ -86,20 +85,20 @@ export function initAuth() {
     supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setState({ status: "authed", user: session.user, session });
-        // Revalidate role in background
-        refreshRole(session.user.id);
+        // Revalidate roles in background
+        refreshRoles();
       } else {
-        writeCachedRole(null);
-        setState({ status: "anon", user: null, session: null, role: null });
+        clearCachedRoles();
+        setState({ status: "anon", user: null, session: null, roles: [] });
       }
     });
 
     const { data } = await supabase.auth.getSession();
     if (data.session?.user) {
       setState({ status: "authed", user: data.session.user, session: data.session });
-      await refreshRole(data.session.user.id);
+      await refreshRoles();
     } else {
-      setState({ status: "anon", user: null, session: null, role: null });
+      setState({ status: "anon", user: null, session: null, roles: [] });
     }
   })();
   return initPromise;
@@ -110,24 +109,25 @@ export async function signIn(email: string, password: string) {
   if (error) throw error;
 }
 
-export async function signUp(email: string, password: string, fullName?: string) {
+export async function signUp(email: string, password: string, displayName?: string) {
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-      data: { full_name: fullName ?? email.split("@")[0] },
+      data: { display_name: displayName ?? email.split("@")[0] },
     },
   });
   if (error) throw error;
 }
 
 export async function signOut() {
-  writeCachedRole(null);
+  clearCachedRoles();
   await supabase.auth.signOut();
 }
 
 export function hasRole(role: AppRole) {
-  return state.role === role;
+  return state.roles.includes(role);
 }
-export function isAdmin() { return state.role === "admin"; }
+export function isAdmin() { return hasRole("admin"); }
+export function isReporter() { return hasRole("reporter"); }

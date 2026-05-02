@@ -18,7 +18,7 @@ import { useState } from "react";
 
 const searchSchema = z.object({
   q: z.string().optional(),
-  category: z.string().optional(),
+  status: z.enum(["all", "draft", "published"]).optional(),
   page: z.number().int().min(1).optional(),
 });
 
@@ -27,7 +27,7 @@ const PAGE_SIZE = 15;
 export const Route = createFileRoute("/_app/news/")({
   validateSearch: searchSchema,
   component: () => (
-    <AuthGuard require={["admin", "user"]}>
+    <AuthGuard require={["admin", "reporter"]}>
       <NewsList />
     </AuthGuard>
   ),
@@ -35,25 +35,26 @@ export const Route = createFileRoute("/_app/news/")({
 
 function NewsList() {
   const auth = useAuth();
-  const isAdmin = auth.role === "admin";
+  const isAdmin = auth.roles.includes("admin");
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const page = search.page ?? 1;
-  const category = search.category ?? "all";
+  const status = search.status ?? "all";
   const q = search.q ?? "";
 
   const { data, isLoading } = useQuery({
-    queryKey: ["news", { category, q, page }],
+    queryKey: ["articles", { isAdmin, uid: auth.user?.id, status, q, page }],
     queryFn: async () => {
       let query = supabase
-        .from("news")
-        .select("id,title,description,image_url,category,source,created_at,city,country", { count: "exact" })
-        .order("created_at", { ascending: false })
+        .from("articles")
+        .select("id,title,status,author_id,created_at,updated_at,image_url,category", { count: "exact" })
+        .order("updated_at", { ascending: false })
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-      if (category !== "all") query = query.eq("category", category);
+      if (!isAdmin) query = query.eq("author_id", auth.user!.id);
+      if (status !== "all") query = query.eq("status", status);
       if (q) query = query.ilike("title", `%${q}%`);
       const { data, error, count } = await query;
       if (error) throw error;
@@ -61,25 +62,15 @@ function NewsList() {
     },
   });
 
-  const categoriesQ = useQuery({
-    queryKey: ["news-categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("news").select("category").not("category", "is", null).limit(500);
-      if (error) throw error;
-      const set = new Set<string>();
-      for (const r of data ?? []) if (r.category) set.add(r.category);
-      return Array.from(set).sort();
-    },
-  });
-
   const delMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("news").delete().eq("id", id);
+      const { error } = await supabase.from("articles").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("News deleted");
-      qc.invalidateQueries({ queryKey: ["news"] });
+      toast.success("Article deleted");
+      qc.invalidateQueries({ queryKey: ["articles"] });
+      qc.invalidateQueries({ queryKey: ["workspace-stats"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Delete failed"),
@@ -90,16 +81,14 @@ function NewsList() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">News</h1>
           <p className="mt-1 text-muted-foreground">
-            {isAdmin ? "Manage all news articles." : "Browse the latest news."}
+            {isAdmin ? "All articles across the newsroom." : "Your articles."}
           </p>
         </div>
-        {isAdmin && (
-          <Button asChild><Link to="/news/editor/new"><Plus className="mr-2 h-4 w-4" /> New article</Link></Button>
-        )}
+        <Button asChild><Link to="/news/editor/new"><Plus className="mr-2 h-4 w-4" /> New article</Link></Button>
       </div>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -112,20 +101,15 @@ function NewsList() {
             className="pl-9"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={category === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => navigate({ search: (p) => ({ ...p, category: undefined, page: 1 }) })}
-          >All</Button>
-          {(categoriesQ.data ?? []).slice(0, 8).map((c) => (
+        <div className="flex gap-2">
+          {(["all", "draft", "published"] as const).map((s) => (
             <Button
-              key={c}
-              variant={category === c ? "default" : "outline"}
+              key={s}
+              variant={status === s ? "default" : "outline"}
               size="sm"
-              onClick={() => navigate({ search: (p) => ({ ...p, category: c, page: 1 }) })}
+              onClick={() => navigate({ search: (p) => ({ ...p, status: s, page: 1 }) })}
               className="capitalize"
-            >{c}</Button>
+            >{s}</Button>
           ))}
         </div>
       </div>
@@ -137,48 +121,39 @@ function NewsList() {
               <div key={a.id} className="flex items-center gap-4 p-4 hover:bg-muted/40">
                 <div className="h-14 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
                   {a.image_url ? (
-                    <img src={a.image_url} alt="" className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
+                    <img src={a.image_url} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">No image</div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{a.title ?? "(untitled)"}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    {a.category && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium capitalize text-primary">
-                        {a.category}
-                      </span>
-                    )}
-                    {a.source && <span>· {a.source}</span>}
-                    {(a.city || a.country) && <span>· {[a.city, a.country].filter(Boolean).join(", ")}</span>}
-                    <span>· {new Date(a.created_at!).toLocaleDateString()}</span>
+                  <p className="truncate font-medium">{a.title}</p>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className={`rounded-full px-2 py-0.5 font-medium capitalize ${a.status === "published" ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
+                      {a.status}
+                    </span>
+                    {a.category && <span>· {a.category}</span>}
+                    <span>· {new Date(a.updated_at).toLocaleDateString()}</span>
                   </div>
                 </div>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" asChild>
                     <Link to="/news/preview/$id" params={{ id: a.id }}><Eye className="h-4 w-4" /></Link>
                   </Button>
-                  {isAdmin && (
-                    <>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to="/news/editor/$id" params={{ id: a.id }}><Pencil className="h-4 w-4" /></Link>
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteId(a.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </>
-                  )}
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/news/editor/$id" params={{ id: a.id }}><Pencil className="h-4 w-4" /></Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setDeleteId(a.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="p-12 text-center">
-            <p className="text-muted-foreground">No news found.</p>
-            {isAdmin && (
-              <Button className="mt-4" asChild><Link to="/news/editor/new">Create your first article</Link></Button>
-            )}
+            <p className="text-muted-foreground">No articles found.</p>
+            <Button className="mt-4" asChild><Link to="/news/editor/new">Create your first article</Link></Button>
           </div>
         )}
       </Card>

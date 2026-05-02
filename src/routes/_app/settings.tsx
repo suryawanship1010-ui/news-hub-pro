@@ -7,13 +7,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { InlineLoader } from "@/components/loaders";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/settings")({
-  component: () => <AuthGuard require={["admin", "user"]}><SettingsPage /></AuthGuard>,
+  component: () => <AuthGuard require="admin"><SettingsPage /></AuthGuard>,
 });
 
 function SettingsPage() {
@@ -21,11 +22,9 @@ function SettingsPage() {
   const qc = useQueryClient();
   const userId = auth.user?.id;
 
-  const [fullName, setFullName] = useState("");
-  const [city, setCity] = useState("");
-  const [country, setCountry] = useState("");
-  const [professions, setProfessions] = useState("");
-  const [interests, setInterests] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [initialized, setInitialized] = useState(false);
 
   const profileQ = useQuery({
@@ -40,11 +39,9 @@ function SettingsPage() {
 
   useEffect(() => {
     if (profileQ.data && !initialized) {
-      setFullName(profileQ.data.full_name ?? "");
-      setCity(profileQ.data.city ?? "");
-      setCountry(profileQ.data.country ?? "");
-      setProfessions((profileQ.data.professions ?? []).join(", "));
-      setInterests((profileQ.data.interests ?? []).join(", "));
+      setDisplayName(profileQ.data.display_name ?? "");
+      setBio(profileQ.data.bio ?? "");
+      setAvatarUrl(profileQ.data.avatar_url ?? "");
       setInitialized(true);
     }
   }, [profileQ.data, initialized]);
@@ -52,15 +49,8 @@ function SettingsPage() {
   const save = useMutation({
     mutationFn: async () => {
       if (!userId) throw new Error("No user");
-      const toArr = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
       const { error } = await supabase.from("profiles").upsert({
-        id: userId,
-        email: auth.user?.email ?? null,
-        full_name: fullName || null,
-        city: city || null,
-        country: country || null,
-        professions: toArr(professions),
-        interests: toArr(interests),
+        id: userId, display_name: displayName || null, bio: bio || null, avatar_url: avatarUrl || null,
       });
       if (error) throw error;
     },
@@ -76,35 +66,25 @@ function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-      <p className="mt-1 text-muted-foreground">Manage your profile.</p>
+      <p className="mt-1 text-muted-foreground">Manage your admin profile.</p>
 
       <Card className="mt-6 p-6">
         <div className="space-y-4">
           <div>
+            <Label htmlFor="dn">Display name</Label>
+            <Input id="dn" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1.5" />
+          </div>
+          <div>
+            <Label htmlFor="av">Avatar URL</Label>
+            <Input id="av" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…" className="mt-1.5" />
+          </div>
+          <div>
+            <Label htmlFor="bio">Bio</Label>
+            <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} rows={4} className="mt-1.5" />
+          </div>
+          <div>
             <Label>Email</Label>
             <Input value={auth.user?.email ?? ""} disabled className="mt-1.5" />
-          </div>
-          <div>
-            <Label htmlFor="fn">Full name</Label>
-            <Input id="fn" value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-1.5" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="city">City</Label>
-              <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1.5" />
-            </div>
-            <div>
-              <Label htmlFor="country">Country</Label>
-              <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} className="mt-1.5" />
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="prof">Professions (comma-separated)</Label>
-            <Input id="prof" value={professions} onChange={(e) => setProfessions(e.target.value)} placeholder="Engineer, Writer" className="mt-1.5" />
-          </div>
-          <div>
-            <Label htmlFor="int">Interests (comma-separated)</Label>
-            <Input id="int" value={interests} onChange={(e) => setInterests(e.target.value)} placeholder="Politics, Tech, Sports" className="mt-1.5" />
           </div>
           <Button onClick={() => save.mutate()} disabled={save.isPending}>
             {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
