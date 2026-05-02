@@ -14,96 +14,180 @@ export type Database = {
   }
   public: {
     Tables: {
-      articles: {
+      news: {
         Row: {
-          author_id: string
+          action_points: Json | null
           category: string | null
-          content: string | null
-          created_at: string
-          excerpt: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          description: string | null
+          district: string | null
           id: string
           image_url: string | null
-          published_at: string | null
-          slug: string | null
-          status: Database["public"]["Enums"]["article_status"]
-          title: string
-          updated_at: string
+          key_points: Json | null
+          pincode: string | null
+          source: string | null
+          state: string | null
+          summary: string | null
+          taluka: string | null
+          title: string | null
+          url: string | null
         }
         Insert: {
-          author_id: string
+          action_points?: Json | null
           category?: string | null
-          content?: string | null
-          created_at?: string
-          excerpt?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          district?: string | null
           id?: string
           image_url?: string | null
-          published_at?: string | null
-          slug?: string | null
-          status?: Database["public"]["Enums"]["article_status"]
-          title: string
-          updated_at?: string
+          key_points?: Json | null
+          pincode?: string | null
+          source?: string | null
+          state?: string | null
+          summary?: string | null
+          taluka?: string | null
+          title?: string | null
+          url?: string | null
         }
         Update: {
-          author_id?: string
+          action_points?: Json | null
           category?: string | null
-          content?: string | null
-          created_at?: string
-          excerpt?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          district?: string | null
           id?: string
           image_url?: string | null
-          published_at?: string | null
-          slug?: string | null
-          status?: Database["public"]["Enums"]["article_status"]
-          title?: string
-          updated_at?: string
+          key_points?: Json | null
+          pincode?: string | null
+          source?: string | null
+          state?: string | null
+          summary?: string | null
+          taluka?: string | null
+          title?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      password_otps: {
+        Row: {
+          email: string
+          expires_at: string
+          otp: string
+          used: boolean | null
+        }
+        Insert: {
+          email: string
+          expires_at: string
+          otp: string
+          used?: boolean | null
+        }
+        Update: {
+          email?: string
+          expires_at?: string
+          otp?: string
+          used?: boolean | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string
-          display_name: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
           id: string
-          updated_at: string
+          interests: string[] | null
+          latitude: number | null
+          location_updated_at: string | null
+          longitude: number | null
+          professions: string[] | null
         }
         Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string
-          display_name?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
           id: string
-          updated_at?: string
+          interests?: string[] | null
+          latitude?: number | null
+          location_updated_at?: string | null
+          longitude?: number | null
+          professions?: string[] | null
         }
         Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string
-          display_name?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
-          updated_at?: string
+          interests?: string[] | null
+          latitude?: number | null
+          location_updated_at?: string | null
+          longitude?: number | null
+          professions?: string[] | null
+        }
+        Relationships: []
+      }
+      saved_articles: {
+        Row: {
+          article_id: string | null
+          created_at: string
+          description: string | null
+          id: number
+          image_url: string | null
+          source: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          article_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          image_url?: string | null
+          source?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          article_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          image_url?: string | null
+          source?: string | null
+          title?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       user_roles: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          role: string | null
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          role?: string | null
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
+          role?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -112,21 +196,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_my_roles: {
-        Args: never
-        Returns: Database["public"]["Enums"]["app_role"][]
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      get_my_role: { Args: never; Returns: string }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "reporter"
-      article_status: "draft" | "published"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -253,9 +327,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "reporter"],
-      article_status: ["draft", "published"],
-    },
+    Enums: {},
   },
 } as const
