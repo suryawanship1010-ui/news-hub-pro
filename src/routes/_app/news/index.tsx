@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const searchSchema = z.object({
   q: z.string().optional(),
@@ -47,6 +47,8 @@ function NewsList() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["news-list", { isAdmin, uid: auth.user?.id, scope, q, page }],
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       let query = supabase
         .from("news")
