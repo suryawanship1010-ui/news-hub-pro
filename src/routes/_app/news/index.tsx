@@ -44,6 +44,13 @@ function NewsList() {
   const page = search.page ?? 1;
   const scope = search.scope ?? (isAdmin ? "all" : "mine");
   const q = search.q ?? "";
+  const [qInput, setQInput] = useState(q);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (qInput !== q) navigate({ search: (p) => ({ ...p, q: qInput || undefined, page: 1 }) });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [qInput]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["news-list", { isAdmin, uid: auth.user?.id, scope, q, page }],
@@ -97,8 +104,8 @@ function NewsList() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by title…"
-            defaultValue={q}
-            onChange={(e) => navigate({ search: (p) => ({ ...p, q: e.target.value || undefined, page: 1 }) })}
+            value={qInput}
+            onChange={(e) => setQInput(e.target.value)}
             className="pl-9"
           />
         </div>
