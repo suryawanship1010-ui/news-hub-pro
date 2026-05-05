@@ -14,6 +14,7 @@ export const Route = createFileRoute("/_app/feed")({
 function FeedPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["feed"],
+    staleTime: 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("news")

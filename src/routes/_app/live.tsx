@@ -14,7 +14,8 @@ export const Route = createFileRoute("/_app/live")({
 function LivePage() {
   const { data, isLoading } = useQuery({
     queryKey: ["live-news"],
-    refetchInterval: 15_000,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
     queryFn: async () => {
       const cutoff = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
       const { data, error } = await supabase

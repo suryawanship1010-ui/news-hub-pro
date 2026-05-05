@@ -41,6 +41,7 @@ function AdsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["ads", { isAdmin, uid: auth.user?.id }],
+    staleTime: 30_000,
     queryFn: async () => {
       let q = supabase.from("ads").select("*").order("created_at", { ascending: false });
       if (!isAdmin) q = q.eq("created_by", auth.user!.id);
