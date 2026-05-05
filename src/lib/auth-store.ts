@@ -97,7 +97,13 @@ export function initAuth() {
     const { data } = await supabase.auth.getSession();
     if (data.session?.user) {
       setState({ status: "authed", user: data.session.user, session: data.session });
-      await refreshRoles();
+      // If we have cached roles, revalidate in background (non-blocking).
+      // Only await when there's no cache to avoid an empty-roles flash.
+      if (state.roles.length > 0) {
+        refreshRoles();
+      } else {
+        await refreshRoles();
+      }
     } else {
       setState({ status: "anon", user: null, session: null, roles: [] });
     }
