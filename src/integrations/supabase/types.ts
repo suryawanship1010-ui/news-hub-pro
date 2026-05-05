@@ -244,8 +244,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_admin_stats: { Args: never; Returns: Json }
       get_my_role: { Args: never; Returns: string }
       get_my_roles: { Args: never; Returns: string[] }
+      get_workspace_stats: { Args: never; Returns: Json }
       has_role: { Args: { _role: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
