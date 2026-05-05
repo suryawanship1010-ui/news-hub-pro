@@ -169,7 +169,9 @@ function EditorInner({ forceNew }: { forceNew: boolean }) {
           <div>
             <Label>Full content / Summary</Label>
             <div className="mt-1.5">
-              <RichTextEditor value={form.summary} onChange={(html) => setForm((f) => ({ ...f, summary: html }))} />
+              <Suspense fallback={<Skeleton className="h-[360px] w-full rounded-md" />}>
+                <RichTextEditor value={form.summary} onChange={(html) => setForm((f) => ({ ...f, summary: html }))} />
+              </Suspense>
             </div>
           </div>
         </div>
