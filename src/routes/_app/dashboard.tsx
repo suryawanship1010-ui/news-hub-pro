@@ -17,15 +17,12 @@ export const Route = createFileRoute("/_app/dashboard")({
 function DashboardPage() {
   const stats = useQuery({
     queryKey: ["admin-stats"],
+    staleTime: 60_000,
     queryFn: async () => {
-      const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-      const [{ count: total }, { count: recent }, { count: ads }, { count: users }] = await Promise.all([
-        supabase.from("news").select("*", { count: "exact", head: true }),
-        supabase.from("news").select("*", { count: "exact", head: true }).gte("created_at", since),
-        supabase.from("ads").select("*", { count: "exact", head: true }).eq("active", true),
-        supabase.from("profiles").select("*", { count: "exact", head: true }),
-      ]);
-      return { total: total ?? 0, recent: recent ?? 0, ads: ads ?? 0, users: users ?? 0 };
+      const { data, error } = await supabase.rpc("get_admin_stats");
+      if (error) throw error;
+      const d = (data ?? {}) as { total?: number; recent?: number; ads?: number; users?: number };
+      return { total: d.total ?? 0, recent: d.recent ?? 0, ads: d.ads ?? 0, users: d.users ?? 0 };
     },
   });
 

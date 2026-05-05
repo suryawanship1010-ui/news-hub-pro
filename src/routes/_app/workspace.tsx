@@ -23,19 +23,19 @@ function WorkspacePage() {
   const stats = useQuery({
     queryKey: ["workspace-stats", userId],
     enabled: !!userId,
+    staleTime: 60_000,
     queryFn: async () => {
-      const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-      const [{ count: total }, { count: recent }] = await Promise.all([
-        supabase.from("news").select("*", { count: "exact", head: true }).eq("created_by", userId!),
-        supabase.from("news").select("*", { count: "exact", head: true }).eq("created_by", userId!).gte("created_at", since),
-      ]);
-      return { total: total ?? 0, recent: recent ?? 0 };
+      const { data, error } = await supabase.rpc("get_workspace_stats");
+      if (error) throw error;
+      const d = (data ?? {}) as { total?: number; recent?: number };
+      return { total: d.total ?? 0, recent: d.recent ?? 0 };
     },
   });
 
   const recent = useQuery({
     queryKey: ["workspace-recent", userId],
     enabled: !!userId,
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("news").select("id,title,created_at,category")
