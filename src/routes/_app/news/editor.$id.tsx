@@ -3,16 +3,21 @@ import { AuthGuard } from "@/guards/AuthGuard";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { InlineLoader } from "@/components/loaders";
-import { RichTextEditor } from "@/components/RichTextEditor";
 import { ArrowLeft, Save, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+const RichTextEditor = lazy(() =>
+  import("@/components/RichTextEditor").then((m) => ({ default: m.RichTextEditor }))
+);
+
 
 export const Route = createFileRoute("/_app/news/editor/$id")({
   component: () => (
@@ -164,7 +169,9 @@ function EditorInner({ forceNew }: { forceNew: boolean }) {
           <div>
             <Label>Full content / Summary</Label>
             <div className="mt-1.5">
-              <RichTextEditor value={form.summary} onChange={(html) => setForm((f) => ({ ...f, summary: html }))} />
+              <Suspense fallback={<Skeleton className="h-[360px] w-full rounded-md" />}>
+                <RichTextEditor value={form.summary} onChange={(html) => setForm((f) => ({ ...f, summary: html }))} />
+              </Suspense>
             </div>
           </div>
         </div>
