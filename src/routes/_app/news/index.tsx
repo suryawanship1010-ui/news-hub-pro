@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { InlineLoader } from "@/components/loaders";
 import { Plus, Eye, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -16,13 +17,23 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useEffect, useState } from "react";
 
+const STATUS_OPTIONS = ["all", "draft", "pending", "approved", "rejected"] as const;
+
 const searchSchema = z.object({
   q: z.string().optional(),
   scope: z.enum(["all", "mine"]).optional(),
+  status: z.enum(STATUS_OPTIONS).optional(),
   page: z.number().int().min(1).optional(),
 });
 
 const PAGE_SIZE = 15;
+
+const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  draft: { label: "Draft", variant: "secondary" },
+  pending: { label: "Pending", variant: "outline" },
+  approved: { label: "Approved", variant: "default" },
+  rejected: { label: "Rejected", variant: "destructive" },
+};
 
 export const Route = createFileRoute("/_app/news/")({
   validateSearch: searchSchema,
@@ -43,6 +54,7 @@ function NewsList() {
 
   const page = search.page ?? 1;
   const scope = search.scope ?? (isAdmin ? "all" : "mine");
+  const status = search.status ?? "all";
   const q = search.q ?? "";
   const [qInput, setQInput] = useState(q);
   useEffect(() => {
@@ -50,19 +62,21 @@ function NewsList() {
       if (qInput !== q) navigate({ search: (p) => ({ ...p, q: qInput || undefined, page: 1 }) });
     }, 300);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qInput]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["news-list", { isAdmin, uid: auth.user?.id, scope, q, page }],
+    queryKey: ["news-list", { isAdmin, uid: auth.user?.id, scope, status, q, page }],
     staleTime: 30_000,
     placeholderData: (prev) => prev,
     queryFn: async () => {
       let query = supabase
         .from("news")
-        .select("id,title,description,created_by,created_at,image_url,category,city,state", { count: "exact" })
+        .select("id,title,description,created_by,created_at,image_url,category,city,state,status,admin_remark", { count: "exact" })
         .order("created_at", { ascending: false })
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
       if (!isAdmin || scope === "mine") query = query.eq("created_by", auth.user!.id);
+      if (status !== "all") query = query.eq("status", status);
       if (q) query = query.ilike("title", `%${q}%`);
       const { data, error, count } = await query;
       if (error) throw error;
@@ -124,41 +138,62 @@ function NewsList() {
         )}
       </div>
 
+      {/* Status filter chips */}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {STATUS_OPTIONS.map((s) => (
+          <Button
+            key={s}
+            variant={status === s ? "default" : "outline"}
+            size="sm"
+            onClick={() => navigate({ search: (p) => ({ ...p, status: s, page: 1 }) })}
+            className="capitalize"
+          >
+            {s}
+          </Button>
+        ))}
+      </div>
+
       <Card className="mt-4 overflow-hidden">
         {isLoading ? <InlineLoader /> : data?.rows.length ? (
           <div className="divide-y divide-border">
-            {data.rows.map((a) => (
-              <div key={a.id} className="flex items-center gap-4 p-4 hover:bg-muted/40">
-                <div className="h-14 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
-                  {a.image_url ? (
-                    <img src={a.image_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">No image</div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{a.title ?? "Untitled"}</p>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                    {a.category && <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium capitalize text-primary">{a.category}</span>}
-                    {(a.city || a.state) && <span>· {[a.city, a.state].filter(Boolean).join(", ")}</span>}
-                    {a.created_at && <span>· {new Date(a.created_at).toLocaleDateString()}</span>}
+            {data.rows.map((a) => {
+              const s = STATUS_BADGE[a.status ?? "draft"] ?? STATUS_BADGE.draft;
+              return (
+                <div key={a.id} className="flex items-center gap-4 p-4 hover:bg-muted/40">
+                  <div className="h-14 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
+                    {a.image_url ? (
+                      <img src={a.image_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">No image</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate font-medium">{a.title ?? "Untitled"}</p>
+                      <Badge variant={s.variant} className="shrink-0">{s.label}</Badge>
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      {a.category && <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium capitalize text-primary">{a.category}</span>}
+                      {(a.city || a.state) && <span>· {[a.city, a.state].filter(Boolean).join(", ")}</span>}
+                      {a.created_at && <span>· {new Date(a.created_at).toLocaleDateString()}</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to="/news/preview/$id" params={{ id: a.id }}><Eye className="h-4 w-4" /></Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to="/news/editor/$id" params={{ id: a.id }}><Pencil className="h-4 w-4" /></Link>
+                    </Button>
+                    {(isAdmin || a.created_by === auth.user?.id) && (
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteId(a.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to="/news/preview/$id" params={{ id: a.id }}><Eye className="h-4 w-4" /></Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to="/news/editor/$id" params={{ id: a.id }}><Pencil className="h-4 w-4" /></Link>
-                  </Button>
-                  {(isAdmin || a.created_by === auth.user?.id) && (
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteId(a.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="p-12 text-center">
