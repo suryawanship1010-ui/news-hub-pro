@@ -3,8 +3,16 @@ import { AuthGuard } from "@/guards/AuthGuard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { InlineLoader } from "@/components/loaders";
-import { ArrowLeft, Pencil, ExternalLink } from "lucide-react";
+import { ArrowLeft, Pencil, ExternalLink, MessageSquare } from "lucide-react";
+
+const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  draft: { label: "Draft", variant: "secondary" },
+  pending: { label: "Pending Review", variant: "outline" },
+  approved: { label: "Approved", variant: "default" },
+  rejected: { label: "Rejected", variant: "destructive" },
+};
 
 export const Route = createFileRoute("/_app/news/preview/$id")({
   component: () => (
