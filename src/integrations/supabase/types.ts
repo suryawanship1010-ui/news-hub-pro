@@ -62,6 +62,7 @@ export type Database = {
       news: {
         Row: {
           action_points: Json | null
+          admin_remark: string | null
           category: string | null
           city: string | null
           country: string | null
@@ -73,8 +74,11 @@ export type Database = {
           image_url: string | null
           key_points: Json | null
           pincode: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           source: string | null
           state: string | null
+          status: string
           summary: string | null
           taluka: string | null
           title: string | null
@@ -82,6 +86,7 @@ export type Database = {
         }
         Insert: {
           action_points?: Json | null
+          admin_remark?: string | null
           category?: string | null
           city?: string | null
           country?: string | null
@@ -93,8 +98,11 @@ export type Database = {
           image_url?: string | null
           key_points?: Json | null
           pincode?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           source?: string | null
           state?: string | null
+          status?: string
           summary?: string | null
           taluka?: string | null
           title?: string | null
@@ -102,6 +110,7 @@ export type Database = {
         }
         Update: {
           action_points?: Json | null
+          admin_remark?: string | null
           category?: string | null
           city?: string | null
           country?: string | null
@@ -113,8 +122,11 @@ export type Database = {
           image_url?: string | null
           key_points?: Json | null
           pincode?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           source?: string | null
           state?: string | null
+          status?: string
           summary?: string | null
           taluka?: string | null
           title?: string | null
