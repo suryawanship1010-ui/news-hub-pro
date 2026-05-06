@@ -19,7 +19,6 @@ export function AuthGuard({ children, require }: Props) {
 
   if (require) {
     const required = Array.isArray(require) ? require : [require];
-    if (auth.roles.length === 0) return <FullPageLoader label="Checking permissions…" />;
     const hasAny = required.some((r) => auth.roles.includes(r));
     if (!hasAny) {
       return (
