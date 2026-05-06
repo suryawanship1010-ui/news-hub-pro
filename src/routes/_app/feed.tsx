@@ -19,6 +19,7 @@ function FeedPage() {
       const { data, error } = await supabase
         .from("news")
         .select("id,title,description,image_url,category,created_at,city,state")
+        .eq("status", "approved")
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
