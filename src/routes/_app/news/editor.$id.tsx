@@ -240,7 +240,7 @@ function EditorInner({ forceNew }: { forceNew: boolean }) {
             <h3 className="font-semibold">Actions</h3>
             <div className="mt-3 space-y-3">
               {/* Save as draft (for reporters) or save (for admins) */}
-              <Button className="w-full" onClick={() => save.mutate()} disabled={save.isPending}>
+              <Button className="w-full" onClick={() => save.mutate(undefined)} disabled={save.isPending}>
                 {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {isAdmin ? "Save & Publish" : "Save Draft"}
               </Button>
