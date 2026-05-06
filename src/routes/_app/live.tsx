@@ -21,6 +21,7 @@ function LivePage() {
       const { data, error } = await supabase
         .from("news")
         .select("id,title,description,created_at,category,city,state")
+        .eq("status", "approved")
         .gte("created_at", cutoff)
         .order("created_at", { ascending: false })
         .limit(15);
