@@ -81,7 +81,7 @@ function UsersPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  {(["user", "reporter", "admin"] as const).map((r) => {
+                  {(["reporter", "admin"] as const).map((r) => {
                     const active = u.role === r;
                     return (
                       <Button
